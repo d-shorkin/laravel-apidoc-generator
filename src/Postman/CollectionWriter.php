@@ -46,7 +46,12 @@ class CollectionWriter
         }
 
         $collection = [
-            'variables' => [],
+            'variables' => [
+                [
+                    'key' =>  'api_url',
+                    'value' => \url('/')
+                ]
+            ],
             'info' => [
                 'name' => config('apidoc.postman.name') ?: config('app.name') . ' API',
                 '_postman_id' => Uuid::uuid4()->toString(),

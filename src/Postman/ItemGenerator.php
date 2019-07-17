@@ -146,7 +146,7 @@ class ItemGenerator
             $uri = str_replace('{' . $key . '}', $param, $uri);
         }
 
-        $url = url($uri);
+        $url = '{{api_url}}/' . ltrim($uri, '/');
 
         if (!isset($route['queryParameters']) || !$route['queryParameters']) {
             return $url;
@@ -172,22 +172,11 @@ class ItemGenerator
 
         $build = [
             'raw' => $raw,
+            'host' => ['{{api_url}}']
         ];
 
-        if (isset($parsed['scheme'])) {
-            $build['protocol'] = $parsed['scheme'];
-        }
-
-        if (isset($parsed['host'])) {
-            $build['host'] = explode('.', $parsed['host']);
-        }
-
-        if (isset($parsed['port'])) {
-            $build['port'] = $parsed['port'];
-        }
-
         if (isset($parsed['path'])) {
-            $build['path'] = explode('/', trim($parsed['path'], '/'));
+            $build['path'] = array_slice(explode('/', trim($parsed['path'], '/')), 1);
         }
 
         if (isset($parsed['user'])) {
