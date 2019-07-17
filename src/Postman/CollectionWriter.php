@@ -17,16 +17,23 @@ class CollectionWriter
      * @var string
      */
     private $baseUrl;
+    /**
+     * @var ItemGenerator
+     */
+    private $itemGenerator;
 
     /**
      * CollectionWriter constructor.
      *
      * @param Collection $routeGroups
+     * @param $baseUrl
+     * @param ItemGenerator $itemGenerator
      */
-    public function __construct(Collection $routeGroups, $baseUrl)
+    public function __construct(Collection $routeGroups, $baseUrl, ItemGenerator $itemGenerator)
     {
         $this->routeGroups = $routeGroups;
         $this->baseUrl = $baseUrl;
+        $this->itemGenerator = $itemGenerator;
     }
 
     public function getCollection()
@@ -41,38 +48,17 @@ class CollectionWriter
         $collection = [
             'variables' => [],
             'info' => [
-                'name' => config('apidoc.postman.name') ?: config('app.name').' API',
+                'name' => config('apidoc.postman.name') ?: config('app.name') . ' API',
                 '_postman_id' => Uuid::uuid4()->toString(),
                 'description' => config('apidoc.postman.description') ?: '',
-                'schema' => 'https://schema.getpostman.com/json/collection/v2.0.0/collection.json',
+                'schema' => 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
             ],
             'item' => $this->routeGroups->map(function ($routes, $groupName) {
                 return [
                     'name' => $groupName,
                     'description' => '',
                     'item' => $routes->map(function ($route) {
-                        $mode = $route['methods'][0] === 'PUT' ? 'urlencoded' : 'formdata';
-
-                        return [
-                            'name' => $route['title'] != '' ? $route['title'] : url($route['uri']),
-                            'request' => [
-                                'url' => url($route['uri']),
-                                'method' => $route['methods'][0],
-                                'body' => [
-                                    'mode' => $mode,
-                                    $mode => collect($route['bodyParameters'])->map(function ($parameter, $key) {
-                                        return [
-                                            'key' => $key,
-                                            'value' => isset($parameter['value']) ? $parameter['value'] : '',
-                                            'type' => 'text',
-                                            'enabled' => true,
-                                        ];
-                                    })->values()->toArray(),
-                                ],
-                                'description' => $route['description'],
-                                'response' => [],
-                            ],
-                        ];
+                        return $this->itemGenerator->generate($route);
                     })->toArray(),
                 ];
             })->values()->toArray(),
