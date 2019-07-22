@@ -40,6 +40,9 @@ class ItemGenerator
     {
         $body = $this->bodyFactory->create($route);
 
+        $chaiSubset = explode("\n", file_get_contents(__DIR__ . '/chai-subset.js'));
+
+
         return [
             "name" => $route['title'] ?: url($route['uri']),
             "event" => [
@@ -49,11 +52,16 @@ class ItemGenerator
                         "id" => Uuid::uuid4()->toString(),
                         "exec" => array_merge(
                             [
+                                "const chai = require(\"chai\");",
+                            ],
+                            $chaiSubset,
+                            [
+                                "chai.use(chaiSubset);",
                                 "pm.test(\"Status code is 200\", function () {",
                                 "    pm.response.to.have.status(200);",
                                 "});",
                                 "pm.test(\"Body is correct\", function () {",
-                                "    pm.expect(pm.response.json()).to.deep.include("
+                                "    chai.expect(pm.response.json()).to.containSubset("
                             ],
                             $this->getResponseForTest($route),
                             [
