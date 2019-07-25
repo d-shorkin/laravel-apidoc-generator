@@ -20,4 +20,16 @@ class UrlEncoded extends FormData
             'Content-Type' => 'application/x-www-form-urlencoded'
         ];
     }
+
+    /**
+     * Returns postman body mode
+     *
+     * Example: raw, urlencoded, formdata
+     *
+     * @return string
+     */
+    public function getMode(): string
+    {
+        return 'urlencoded';
+    }
 }
