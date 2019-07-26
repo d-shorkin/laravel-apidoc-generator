@@ -169,9 +169,7 @@ class GenerateDocumentation extends Command
             ->with('showPostmanCollectionButton', $this->shouldGeneratePostmanCollection())
             ->with('parsedRoutes', $parsedRouteOutput);
 
-        if (! is_dir($outputPath)) {
-            $documentarian->create($outputPath);
-        }
+        $documentarian->create($outputPath);
 
         // Write output file
         file_put_contents($targetFile, $markdown);
