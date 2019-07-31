@@ -42,7 +42,6 @@ class ItemGenerator
 
         $chaiSubset = explode("\n", file_get_contents(__DIR__ . '/chai-subset.js'));
 
-
         return [
             "name" => $route['title'] ?: url($route['uri']),
             "event" => [
@@ -215,7 +214,7 @@ class ItemGenerator
                 $description = $requiredText . $description;
             }
 
-            if (isset($options['value']) && $options['value']) {
+            if (isset($options['value']) && $options['value'] === null) {
                 $value = $options['value'];
             } else {
                 $value = $this->faker->generate($key, $description);
