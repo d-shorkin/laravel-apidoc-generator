@@ -214,7 +214,7 @@ class ItemGenerator
                 $description = $requiredText . $description;
             }
 
-            if (isset($options['value']) && $options['value'] === null) {
+            if (isset($options['value'])) {
                 $value = $options['value'];
             } else {
                 $value = $this->faker->generate($key, $description);
