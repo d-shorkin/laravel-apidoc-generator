@@ -2,6 +2,7 @@
 
 namespace Mpociot\ApiDoc\Commands;
 
+use Mpociot\ApiDoc\Postman\ItemGenerator;
 use ReflectionClass;
 use ReflectionException;
 use Illuminate\Routing\Route;
@@ -86,7 +87,7 @@ class GenerateDocumentation extends Command
     }
 
     /**
-     * @param  Collection $parsedRoutes
+     * @param Collection $parsedRoutes
      *
      * @return void
      */
@@ -168,9 +169,7 @@ class GenerateDocumentation extends Command
             ->with('showPostmanCollectionButton', $this->shouldGeneratePostmanCollection())
             ->with('parsedRoutes', $parsedRouteOutput);
 
-        if (! is_dir($outputPath)) {
-            $documentarian->create($outputPath);
-        }
+        $documentarian->create($outputPath);
 
         // Write output file
         file_put_contents($targetFile, $markdown);
@@ -288,7 +287,7 @@ class GenerateDocumentation extends Command
      */
     private function generatePostmanCollection(Collection $routes)
     {
-        $writer = new CollectionWriter($routes, $this->docConfig->get('base_url'));
+        $writer = new CollectionWriter($routes, $this->docConfig->get('base_url'), app(ItemGenerator::class));
 
         return $writer->getCollection();
     }

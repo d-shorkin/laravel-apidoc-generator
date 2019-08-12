@@ -47,9 +47,10 @@ class Generator
 
     /**
      * @param  \Illuminate\Routing\Route $route
-     * @param array $apply Rules to apply when generating documentation for this route
+     * @param array $rulesToApply Rules to apply when generating documentation for this route
      *
      * @return array
+     * @throws \ReflectionException
      */
     public function processRoute(Route $route, array $rulesToApply = [])
     {
@@ -60,6 +61,7 @@ class Generator
         $routeGroup = $this->getRouteGroup($controller, $method);
         $docBlock = $this->parseDocBlock($method);
         $bodyParameters = $this->getBodyParameters($method, $docBlock['tags']);
+        $uriParameters = $this->getUriParameters($route, $docBlock['tags']);
         $queryParameters = $this->getQueryParameters($method, $docBlock['tags']);
         $content = ResponseResolver::getResponse($route, $docBlock['tags'], [
             'rules' => $rulesToApply,
@@ -68,20 +70,21 @@ class Generator
         ]);
 
         $parsedRoute = [
-            'id' => md5($this->getUri($route).':'.implode($this->getMethods($route))),
+            'id' => md5($this->getUri($route) . ':' . implode($this->getMethods($route))),
             'group' => $routeGroup,
             'title' => $docBlock['short'],
             'description' => $docBlock['long'],
             'methods' => $this->getMethods($route),
             'uri' => $this->getUri($route),
             'boundUri' => Utils::getFullUrl($route, $rulesToApply['bindings'] ?? ($rulesToApply['response_calls']['bindings'] ?? [])),
+            'uriParams' => $uriParameters,
             'queryParameters' => $queryParameters,
             'bodyParameters' => $bodyParameters,
             'cleanBodyParameters' => $this->cleanParams($bodyParameters),
             'cleanQueryParameters' => $this->cleanParams($queryParameters),
             'authenticated' => $this->getAuthStatusFromDocBlock($docBlock['tags']),
             'response' => $content,
-            'showresponse' => ! empty($content),
+            'showresponse' => !empty($content),
         ];
         $parsedRoute['headers'] = $rulesToApply['headers'] ?? [];
 
@@ -247,7 +250,7 @@ class Generator
                 return $tag instanceof Tag && strtolower($tag->getName()) === 'authenticated';
             });
 
-        return (bool) $authTag;
+        return (bool)$authTag;
     }
 
     /**
@@ -395,5 +398,35 @@ class Generator
         }
 
         return $value;
+    }
+
+    /**
+     * @param Route $route
+     * @param array $tags
+     *
+     * @return array
+     */
+    protected function getUriParameters(Route $route, array $tags)
+    {
+        $parameters = collect($tags)
+            ->filter(function ($tag) {
+                return $tag instanceof Tag && $tag->getName() === 'uriParam' && count(preg_split('/\s+/', $tag->getContent())) >= 2;
+            })
+            ->mapWithKeys(function (Tag $tag) {
+                list($name, $value) = preg_split('/\s+/', $tag->getContent());
+                return [$name => $value];
+            })
+            ->toArray();
+
+        return collect($route->parameterNames())
+            ->mapWithKeys(function ($name) use ($parameters) {
+                if (isset($parameters[$name])) {
+                    $value = $parameters[$name];
+                } else {
+                    $value = $this->generateDummyValue('integer');
+                }
+
+                return [$name => $value];
+            })->toArray();
     }
 }
